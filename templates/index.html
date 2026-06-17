@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BigQuery Release Notes Hub</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- CSS Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="glow-bg"></div>
+    
+    <div class="app-container">
+        <!-- Sidebar / Stats & Filter -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-icon">
+                    <i data-lucide="database" class="logo-svg"></i>
+                </div>
+                <div>
+                    <h1>BQ Notes</h1>
+                    <p>Live Feed Tracker</p>
+                </div>
+            </div>
+
+            <div class="stats-panel glass">
+                <h3>Overview</h3>
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <span class="stat-val" id="total-count">0</span>
+                        <span class="stat-label">Total Notes</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-val text-feature" id="feature-count">0</span>
+                        <span class="stat-label">Features</span>
+                    </div>
+                </div>
+                <div class="last-updated">
+                    <i data-lucide="clock" class="icon-sm"></i>
+                    <span>Last Checked: <strong id="last-fetched-time">Never</strong></span>
+                </div>
+            </div>
+
+            <div class="filter-panel glass">
+                <h3>Filters</h3>
+                <div class="search-box">
+                    <i data-lucide="search" class="search-icon"></i>
+                    <input type="text" id="search-input" placeholder="Search keywords...">
+                </div>
+
+                <div class="category-filters">
+                    <h4>Categories</h4>
+                    <div class="filter-buttons" id="filter-buttons">
+                        <button class="filter-btn active" data-category="all">
+                            <i data-lucide="layers" class="btn-icon"></i> All Updates
+                        </button>
+                        <!-- Other buttons will be dynamically rendered or static -->
+                        <button class="filter-btn" data-category="Feature">
+                            <i data-lucide="zap" class="btn-icon text-feature"></i> Features
+                        </button>
+                        <button class="filter-btn" data-category="Announcement">
+                            <i data-lucide="megaphone" class="btn-icon text-announcement"></i> Announcements
+                        </button>
+                        <button class="filter-btn" data-category="Issue">
+                            <i data-lucide="alert-triangle" class="btn-icon text-issue"></i> Issues/Deprecations
+                        </button>
+                        <button class="filter-btn" data-category="General">
+                            <i data-lucide="info" class="btn-icon text-general"></i> General
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="selection-actions glass hidden" id="selection-box">
+                <div class="selection-info">
+                    <i data-lucide="check-square" class="text-feature"></i>
+                    <span id="selection-text">0 items selected</span>
+                </div>
+                <button class="btn btn-primary btn-tweet-selected" id="tweet-selected-btn">
+                    <i data-lucide="twitter"></i> Tweet Selected
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="main-header">
+                <div class="header-titles">
+                    <h2>BigQuery Release Feed</h2>
+                    <p>Real-time updates straight from official Google Cloud release feeds</p>
+                </div>
+                <button class="btn btn-refresh" id="refresh-btn">
+                    <i data-lucide="refresh-cw" id="refresh-icon"></i>
+                    <span id="refresh-text">Refresh Feed</span>
+                </button>
+            </header>
+
+            <!-- Loading Spinner State -->
+            <div class="loading-state hidden" id="loading-state">
+                <div class="spinner-container">
+                    <div class="spinner"></div>
+                    <p>Fetching latest release notes...</p>
+                </div>
+            </div>
+
+            <!-- Error State -->
+            <div class="error-state glass hidden" id="error-state">
+                <i data-lucide="alert-circle" class="error-icon"></i>
+                <h3>Failed to fetch release notes</h3>
+                <p id="error-message">Unknown error occurred</p>
+                <button class="btn btn-primary" id="retry-btn">Retry Fetch</button>
+            </div>
+
+            <!-- Feed Content List -->
+            <div class="feed-timeline" id="feed-timeline">
+                <!-- Items will be injected dynamically -->
+            </div>
+
+            <!-- Empty State -->
+            <div class="empty-state glass hidden" id="empty-state">
+                <i data-lucide="folder-open" class="empty-icon"></i>
+                <h3>No release notes found</h3>
+                <p>Try refining your search or category filters, or refresh the feed.</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Tweet Modal -->
+    <div class="modal-overlay hidden" id="tweet-modal">
+        <div class="modal glass">
+            <div class="modal-header">
+                <h3>Draft Tweet</h3>
+                <button class="btn-close" id="modal-close-btn">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="tweet-preview-card">
+                    <div class="tweet-user">
+                        <img src="https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png" alt="Profile" class="tweet-avatar">
+                        <div class="tweet-user-details">
+                            <span class="tweet-name">Google Cloud Watcher</span>
+                            <span class="tweet-handle">@BQWatcher</span>
+                        </div>
+                        <i data-lucide="twitter" class="tweet-bird"></i>
+                    </div>
+                    <div class="tweet-textarea-wrapper">
+                        <textarea id="tweet-text" rows="5" placeholder="What's happening?"></textarea>
+                    </div>
+                    <div class="tweet-footer">
+                        <div class="character-counter">
+                            <svg class="progress-ring" width="36" height="36">
+                                <circle class="progress-ring__circle-bg" stroke="#1e293b" stroke-width="3" fill="transparent" r="14" cx="18" cy="18" />
+                                <circle class="progress-ring__circle" id="progress-circle" stroke="#1d9bf0" stroke-width="3" fill="transparent" r="14" cx="18" cy="18" />
+                            </svg>
+                            <span id="char-count-num">280</span>
+                        </div>
+                        <button class="btn btn-tweet" id="modal-tweet-btn">
+                            <i data-lucide="send"></i> Post to Twitter
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
